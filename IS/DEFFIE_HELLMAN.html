@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Diffie-Hellman Key Exchange</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, button {
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+    }
+    .hidden {
+      display: none;
+    }
+    .output {
+      margin-top: 20px;
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<h2> Diffie-Hellman Key Exchange</h2>
+
+<label>Enter Prime Number (P):</label>
+<input type="number" id="primeP" value="23" />
+
+<label>Enter Primitive Root (G):</label>
+<input type="number" id="rootG" value="5" />
+
+<button onclick="validatePG()">Validate P and G</button>
+
+<div id="keySection" class="hidden">
+  <label>Alice's Private Key (a):</label>
+  <input type="number" id="alicePrivate" />
+
+  <label>Bob's Private Key (b):</label>
+  <input type="number" id="bobPrivate" />
+
+  <button onclick="exchangeKeys()">Generate Shared Secret</button>
+</div>
+
+<div class="output" id="output"></div>
+
+<script>
+function modPow(base, exponent, modulus) {
+  let result = 1;
+  base = base % modulus;
+  while (exponent > 0) {
+    if (exponent % 2 === 1) {
+      result = (result * base) % modulus;
+    }
+    exponent = Math.floor(exponent / 2);
+    base = (base * base) % modulus;
+  }
+  return result;
+}
+
+function isPrime(n) {
+  if (n <= 1) return false;
+  if (n <= 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+  }
+  return true;
+}
+
+function validatePG() {
+  const P = parseInt(document.getElementById("primeP").value);
+  const G = parseInt(document.getElementById("rootG").value);
+
+  if (!isPrime(P)) {
+    alert("P must be a prime number.");
+    return;
+  }
+  if (G <= 1 || G >= P) {
+    alert("G must be between 2 and P - 1.");
+    return;
+  }
+
+  document.getElementById("keySection").classList.remove("hidden");
+  document.getElementById("output").innerHTML = `
+     P and G are valid.<br>
+    Prime (P): ${P}, Generator (G): ${G}<br>
+    Now enter Alice and Bob's private keys.
+  `;
+}
+
+function exchangeKeys() {
+  const P = parseInt(document.getElementById("primeP").value);
+  const G = parseInt(document.getElementById("rootG").value);
+  const a = parseInt(document.getElementById("alicePrivate").value);
+  const b = parseInt(document.getElementById("bobPrivate").value);
+
+  if (isNaN(a) || a <= 0 || a >= P) {
+    alert("Alice's private key must be between 1 and P - 1.");
+    return;
+  }
+  if (isNaN(b) || b <= 0 || b >= P) {
+    alert("Bob's private key must be between 1 and P - 1.");
+    return;
+  }
+
+  const A = modPow(G, a, P);
+  const B = modPow(G, b, P);
+
+  const sharedAlice = modPow(B, a, P);
+  const sharedBob = modPow(A, b, P);
+
+  document.getElementById("output").innerHTML = `
+     Public values:<br>
+    P = ${P}, G = ${G}<br><br>
+
+     Alice:<br>
+    Private key (a): ${a}<br>
+    Public key (A): ${A}<br><br>
+
+     Bob:<br>
+    Private key (b): ${b}<br>
+    Public key (B): ${B}<br><br>
+
+     Shared Secret (Alice computes): ${sharedAlice}<br>
+     Shared Secret (Bob computes): ${sharedBob}
+  `;
+}
+</script>
+
+</body>
+</html>
